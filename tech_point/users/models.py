@@ -24,7 +24,7 @@ class CustomUser(AbstractUser):
     username = None
     email = models.EmailField("email address", unique=True)
     workplace = models.ForeignKey(
-        Supplier, on_delete=models.CASCADE, related_name="employees"
+        Supplier, on_delete=models.CASCADE, related_name="employees", null=True
     )
 
     objects = CustomUserManager()
