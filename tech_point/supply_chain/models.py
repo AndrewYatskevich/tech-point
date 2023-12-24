@@ -23,9 +23,11 @@ class Address(models.Model):
     street = models.CharField()
     house_number = models.PositiveSmallIntegerField()
 
-
-class SupplyChain(TimestampMixin):
-    pass
+    def __str__(self):
+        address = (
+            f"{self.country} {self.city} {self.street} {self.house_number}"
+        )
+        return address if len(address) < 50 else address[:50] + "..."
 
 
 class Supplier(TimestampMixin):
@@ -36,6 +38,18 @@ class Supplier(TimestampMixin):
     )
     type = models.CharField(choices=SupplierType.choices)
 
+    def __str__(self):
+        return f"{self.name}({self.type})"
+
+
+class SupplyChain(TimestampMixin):
+    suppliers = models.ManyToManyField(
+        Supplier, through="SupplyChainLink", related_name="supply_chains"
+    )
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.pk})"
+
 
 class Product(models.Model):
     name = models.CharField(max_length=50)
@@ -43,12 +57,17 @@ class Product(models.Model):
     release_date = models.DateField()
     suppliers = models.ManyToManyField(Supplier, related_name="products")
 
+    def __str__(self):
+        return f"{self.name}"
+
 
 class SupplyChainLink(TimestampMixin):
     supply_chain = models.ForeignKey(
         SupplyChain, on_delete=models.CASCADE, related_name="links"
     )
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    supplier = models.ForeignKey(
+        Supplier, on_delete=models.CASCADE, related_name="links"
+    )
     parent = models.OneToOneField(
         "self", on_delete=models.PROTECT, null=True, related_name="child"
     )
@@ -59,3 +78,9 @@ class SupplyChainLink(TimestampMixin):
         Product, related_name="supply_chain_links"
     )
     debt = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return (
+            f"{self.__class__.__name__}(SupplyChain({self.supply_chain.id}), "
+            f"level({self.level}))"
+        )
