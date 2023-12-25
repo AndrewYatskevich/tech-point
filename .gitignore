@@ -150,3 +150,5 @@ cython_debug/
 
 # PyCharm
 .idea/
+
+tech_point/mail/*.log

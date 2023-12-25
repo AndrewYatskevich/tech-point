@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from supply_chain import models
+from supply_chain.tasks import clear_debt_task
 
 
 class SupplyChainLinkInline(admin.TabularInline):
@@ -41,6 +42,13 @@ class SupplyChainLinkAdmin(admin.ModelAdmin):
 
     @admin.action
     def clear_debt(self, request, queryset):
+        if queryset.count() > 20:
+            clear_debt_task.apply_async(
+                kwargs={
+                    "link_ids": list(queryset.values_list("id", flat=True))
+                }
+            )
+            return
         queryset.update(debt=0)
 
 
