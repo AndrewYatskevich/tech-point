@@ -18,21 +18,25 @@ class SupplierType(models.TextChoices):
 
 
 class Address(models.Model):
-    country = models.CharField()
-    city = models.CharField()
+    country = models.CharField(db_index=True)
+    city = models.CharField(db_index=True)
     street = models.CharField()
     house_number = models.PositiveSmallIntegerField()
 
-    def __str__(self):
-        address = (
-            f"{self.country} {self.city} {self.street} {self.house_number}"
+    @property
+    def full_address(self):
+        return ", ".join(
+            (self.country, self.city, self.street, str(self.house_number))
         )
+
+    def __str__(self):
+        address = self.full_address
         return address if len(address) < 50 else address[:50] + "..."
 
 
 class Supplier(TimestampMixin):
-    name = models.CharField(max_length=50)
-    email = models.CharField(max_length=200)
+    name = models.CharField(max_length=50, unique=True)
+    email = models.CharField(max_length=200, unique=True)
     address = models.ForeignKey(
         Address, on_delete=models.CASCADE, related_name="suppliers"
     )
@@ -50,12 +54,15 @@ class SupplyChain(TimestampMixin):
     def __str__(self):
         return f"{self.__class__.__name__}({self.pk})"
 
+    @property
+    def last_link(self):
+        return self.links.order_by("level").last()
+
 
 class Product(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
     model = models.CharField(max_length=50)
     release_date = models.DateField()
-    suppliers = models.ManyToManyField(Supplier, related_name="products")
 
     def __str__(self):
         return f"{self.name}"
@@ -69,7 +76,11 @@ class SupplyChainLink(TimestampMixin):
         Supplier, on_delete=models.CASCADE, related_name="links"
     )
     parent = models.OneToOneField(
-        "self", on_delete=models.PROTECT, null=True, related_name="child"
+        "self",
+        on_delete=models.RESTRICT,
+        related_name="child",
+        blank=True,
+        null=True,
     )
     level = models.PositiveSmallIntegerField(
         validators=(MaxValueValidator(4),)
@@ -79,8 +90,25 @@ class SupplyChainLink(TimestampMixin):
     )
     debt = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        constraints = (
+            models.CheckConstraint(
+                check=models.Q(level__lte=4), name="level__lte__4"
+            ),
+            models.UniqueConstraint(
+                fields=("supply_chain", "level"), name="unique_chain_level"
+            ),
+            models.UniqueConstraint(
+                fields=("supply_chain", "supplier"),
+                name="unique_chain_supplier",
+            ),
+            models.UniqueConstraint(
+                fields=("supply_chain", "parent"), name="unique_chain_parent"
+            ),
+        )
+
     def __str__(self):
         return (
-            f"{self.__class__.__name__}(SupplyChain({self.supply_chain.id}), "
-            f"level({self.level}))"
+            f"{self.__class__.__name__}({self.id})"
+            f"(SupplyChain({self.supply_chain.id}), level({self.level}))"
         )

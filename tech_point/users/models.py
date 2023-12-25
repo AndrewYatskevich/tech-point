@@ -1,6 +1,7 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from supply_chain.models import Supplier
 
@@ -26,8 +27,32 @@ class CustomUser(AbstractUser):
     workplace = models.ForeignKey(
         Supplier, on_delete=models.CASCADE, related_name="employees", null=True
     )
+    is_active = models.BooleanField(
+        _("active"),
+        default=False,
+        help_text=_(
+            "Designates whether this user should be treated as active. "
+            "Unselect this instead of deleting accounts."
+        ),
+    )
 
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
+
+    class Meta:
+        verbose_name = _("user")
+        verbose_name_plural = _("users")
+        constraints = (
+            models.CheckConstraint(
+                check=(
+                    ~(
+                        models.Q(is_active=True)
+                        & models.Q(workplace__isnull=True)
+                    )
+                    | (models.Q(is_staff=True) | models.Q(is_superuser=True))
+                ),
+                name="active_only_if_workplace_or_admin",
+            ),
+        )
