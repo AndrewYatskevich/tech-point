@@ -40,7 +40,7 @@ class SupplyChainLinkSerializer(serializers.ModelSerializer):
 
 
 class SupplyChainSerializer(serializers.ModelSerializer):
-    links = serializers.SerializerMethodField()
+    links = SupplyChainLinkSerializer(many=True)
 
     class Meta:
         model = SupplyChain

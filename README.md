@@ -31,6 +31,13 @@ Check out docker documentation to install:
 
 `docker compose -f docker-compose.yaml up -d`
 
+### Run the test data population script
+
+```shell
+cd tech_point/
+python manage.py setup_test_data
+```
+
 ## Usage
 
 The application is available on 0.0.0.0:8000 host.
@@ -39,6 +46,11 @@ The following functionality has been implemented:
 - Admin panel for managing project data and performing administrative tasks
 - CRUD operations with supply chains and links
 - Ability to filter data based on address or products
+
+To learn about all possibilities, check out the documentation please:
+- http://0.0.0.0:8000/api/v1/schema/
+- http://0.0.0.0:8000/api/v1/schema/swagger-ui/
+- http://0.0.0.0:8000/api/v1/schema/redoc/
 
 ## Features
 

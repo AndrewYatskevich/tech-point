@@ -24,7 +24,7 @@ class Address(models.Model):
     house_number = models.PositiveSmallIntegerField()
 
     @property
-    def full_address(self):
+    def full_address(self) -> str:
         return ", ".join(
             (self.country, self.city, self.street, str(self.house_number))
         )
@@ -55,7 +55,7 @@ class SupplyChain(TimestampMixin):
         return f"{self.__class__.__name__}({self.pk})"
 
     @property
-    def last_link(self):
+    def last_link(self) -> "SupplyChainLink":
         return self.links.order_by("level").last()
 
 

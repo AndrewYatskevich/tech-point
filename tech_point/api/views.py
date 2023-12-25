@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from django.db.models import Prefetch
 from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
@@ -33,19 +34,26 @@ class UserSignUp(CreateAPIView):
 
 
 class SupplyChainViewSet(mixins.RetrieveModelMixin, GenericViewSet):
-    queryset = (
-        SupplyChain.objects.prefetch_related("links", "links__products")
-        .select_related("links__supplier", "links__supplier__address")
-        .all()
-    )
+    queryset = SupplyChain.objects.prefetch_related(
+        Prefetch(
+            "links",
+            SupplyChainLink.objects.select_related(
+                "supplier", "supplier__address"
+            )
+            .prefetch_related("products")
+            .all(),
+        )
+    ).all()
     serializer_class = SupplyChainSerializer
     permission_classes = (IsAdminUser,)
 
     @action(methods=("get",), detail=True, url_path="links")
     def get_chain_links(self, request, pk):
         links = (
-            SupplyChainLink.objects.prefetch_related("products")
-            .select_related("supplier", "supplier__address")
+            SupplyChainLink.objects.select_related(
+                "supplier", "supplier__address"
+            )
+            .prefetch_related("products")
             .filter(supply_chain=pk)
         )
         if "country" in request.query_params:
@@ -59,9 +67,9 @@ class SupplyChainViewSet(mixins.RetrieveModelMixin, GenericViewSet):
 
 
 class SupplyChainLinkViewSet(ModelViewSet):
-    queryset = SupplyChainLink.objects.prefetch_related(
-        "products"
-    ).select_related("supplier", "supplier__address")
+    queryset = SupplyChainLink.objects.select_related(
+        "supplier", "supplier__address"
+    ).prefetch_related("products")
     serializer_class = SupplyChainLinkSerializer
     permission_classes = (IsActiveEmployee,)
     filterset_class = SupplyChainLinkFilter

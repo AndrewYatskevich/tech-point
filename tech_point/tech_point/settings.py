@@ -31,8 +31,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "django_filters",
     "rest_framework.authtoken",
+    "drf_spectacular",
+    "django_filters",
     "core",
     "users",
     "supply_chain",
@@ -75,6 +76,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
     ),
@@ -134,6 +136,13 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.CustomUser"
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "TechPoint",
+    "DESCRIPTION": "Retail platform electronics chain",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
 
 CELERY_BEAT_SCHEDULE = {
     "random_increase_in_supplier_debt": {
