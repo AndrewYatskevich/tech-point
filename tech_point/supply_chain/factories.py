@@ -33,9 +33,10 @@ class SupplierFactory(DjangoModelFactory):
 class ProductFactory(DjangoModelFactory):
     class Meta:
         model = models.Product
+        django_get_or_create = ("name",)
 
     name = factory.Faker("word", part_of_speech="noun")
-    model = factory.Faker("ssn")
+    model = factory.Faker("license_plate")
     release_date = factory.Faker("date")
 
     @factory.post_generation

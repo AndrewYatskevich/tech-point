@@ -31,8 +31,8 @@ class Command(BaseCommand):
             )
             for _ in range(5)
         )
-        addresses = [factories.AddressFactory() for _ in range(10)]
-        products = [factories.ProductFactory() for _ in range(10)]
+        addresses = tuple(factories.AddressFactory() for _ in range(10))
+        products = tuple(factories.ProductFactory() for _ in range(10))
 
         for chain_draft in chain_drafts:
             supply_chain = factories.SupplyChainFactory()
