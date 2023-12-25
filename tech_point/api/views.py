@@ -1,20 +1,21 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from rest_framework import mixins
+from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from api.filters import SupplyChainLinkFilter
 from api.permissions import IsActiveEmployee
-from supply_chain.models import Product, SupplyChain, SupplyChainLink
+from supply_chain.models import Address, Product, SupplyChain, SupplyChainLink
 from supply_chain.serializers import (
     ProductSerializer,
     SupplyChainLinkSerializer,
     SupplyChainSerializer,
 )
+from supply_chain.tasks import send_email_with_link_address
 from users.serializers import UserSerializer
 
 User = get_user_model()
@@ -67,6 +68,14 @@ class SupplyChainLinkViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(supplier=self.request.user.workplace)
+
+    @action(methods=("get",), detail=True, url_path="qr-code")
+    def send_qr_code_address_email(self, request, pk):
+        address = Address.objects.get(suppliers__links__id=pk).full_address
+        send_email_with_link_address.apply_async(
+            kwargs={"address": address, "email": "test_mail"}
+        )
+        return Response("Email has been sent", status=status.HTTP_200_OK)
 
 
 class ProductViewSet(

@@ -1,12 +1,14 @@
 import os
 from pathlib import Path
 
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+TEMPLATES_DIR = BASE_DIR / "templates"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -51,7 +53,7 @@ ROOT_URLCONF = "tech_point.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [TEMPLATES_DIR],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -132,3 +134,20 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.CustomUser"
+
+CELERY_BEAT_SCHEDULE = {
+    "random_increase_in_supplier_debt": {
+        "task": "supply_chain.tasks.random_increase_in_supplier_debt",
+        "schedule": crontab(minute="0", hour="*/3"),
+    },
+    "random_reduce_in_supplier_debt": {
+        "task": "supply_chain.tasks.random_reduce_in_supplier_debt",
+        "schedule": crontab(minute="30", hour="6"),
+    },
+}
+
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, "mail")
